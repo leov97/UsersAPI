@@ -23,7 +23,6 @@ func ExistsEmail() bool {
 	rows, err := db.Query("SELECT ID, Nombre FROM Register")
 	if err != nil {
 		log.Fatal(err)
-		// Maneja el error de manera apropiada para tu API
 	}
 	defer rows.Close()
 
