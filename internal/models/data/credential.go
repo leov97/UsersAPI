@@ -1,6 +1,7 @@
 package data
 
 import (
+	"UserAPI/internal/api/utils"
 	"io/ioutil"
 	"log"
 	"os"
@@ -8,18 +9,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type DatabaseConfig struct {
-	Database struct {
-		User     string `yaml:"user"`
-		Password string `yaml:"password"`
-		Network  string `yaml:"network"`
-		Address  string `yaml:"address"`
-		DBName   string `yaml:"dbName"`
-	} `yaml:"database"`
-}
-
-func NewDatabaseConfig() DatabaseConfig {
-	var config DatabaseConfig
+func NewDatabaseConfig() utils.DatabaseConfig {
+	var config utils.DatabaseConfig
 
 	dataconfig, err := os.Open("cred.yaml")
 	if err != nil {
