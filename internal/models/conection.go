@@ -1,7 +1,7 @@
-package connection
+package models
 
 import (
-	"UserAPI/internal/config/data"
+	"UserAPI/internal/models/data"
 	"database/sql"
 	"log"
 
