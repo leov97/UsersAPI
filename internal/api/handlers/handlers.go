@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"UserAPI/internal/api/pkg"
 	utils "UserAPI/internal/api/utils"
 	"encoding/json"
 	"net/http"
@@ -18,4 +19,8 @@ func RegisterUserHandler(w http.ResponseWriter, r *http.Request) {
 	decode(r, user)
 
 	w.Write([]byte(user.Email))
+	w.Write([]byte(user.Name))
+	w.Write([]byte(user.Password))
+
+	pkg.PostNewUser(*user)
 }

@@ -12,7 +12,7 @@ import (
 func NewDatabaseConfig() utils.DatabaseConfig {
 	var config utils.DatabaseConfig
 
-	dataconfig, err := os.Open("cred.yaml")
+	dataconfig, err := os.Open("config.yaml")
 	if err != nil {
 		log.Fatal(err)
 	}

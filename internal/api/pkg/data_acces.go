@@ -10,7 +10,10 @@ import (
 var db = models.Datasql()
 
 func PostNewUser(datos utils.NewUser) {
-	queryregister := "INSERT INTO Register (Name, Email, Password) VALUES (?, ?, ?)"
+	if ExistsEmail(datos.Email) {
+		log.Fatal("There is already an account with that email")
+	}
+	queryregister := "INSERT INTO Users (Username, Email, Password) VALUES (?, ?, ?)"
 	_, err := db.Exec(queryregister, datos.Name, datos.Email, datos.Password)
 	if err != nil {
 		log.Fatal(err)
@@ -18,14 +21,33 @@ func PostNewUser(datos utils.NewUser) {
 
 }
 
-func ExistsEmail() bool {
+func ExistsEmail(email string) bool {
 
-	rows, err := db.Query("SELECT ID, Nombre FROM Register")
+	compare, err := db.Query("SELECT Email FROM Users")
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer rows.Close()
+	defer compare.Close()
 
-	return true
+	useremails := make([]string, 0)
+	for compare.Next() {
+		var Email string
+		if err := compare.Scan(&Email); err != nil {
+			log.Fatal(err)
+		}
+		useremails = append(useremails, Email)
+	}
+
+	if err := compare.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	for _, emails := range useremails {
+		if email == emails {
+			return true
+		}
+	}
+
+	return false
 
 }
