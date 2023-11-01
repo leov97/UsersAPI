@@ -7,8 +7,9 @@ import (
 )
 
 func main() {
-	//db := connection.Datasql()
+	//db  connection.Datasql()
 	routes.RegisterRoute()
+	routes.LoginRoute()
 	starlistener()
 }
 
