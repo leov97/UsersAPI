@@ -23,4 +23,25 @@ func LoginRoute() {
 			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		}
 	})
+
+}
+
+func LogoutRoute() {
+	http.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "POST" {
+			handlers.LogoutUser(w, r)
+		} else {
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		}
+	})
+}
+
+func DeleteRoute() {
+	http.HandleFunc("/delete", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "DELETE" {
+			handlers.DeleteAccouunt(w, r)
+		} else {
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		}
+	})
 }

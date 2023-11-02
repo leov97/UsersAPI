@@ -2,15 +2,16 @@ package pkg
 
 import (
 	"UserAPI/internal/api/utils"
+	"UserAPI/internal/data"
 	"UserAPI/internal/models"
 
 	"log"
 )
 
-var db = models.Datasql()
+var db = data.Datasql()
 
 // sthis function send tha data to the database
-func PostNewUser(datos utils.NewUser) {
+func PostNewUser(datos models.NewUser) {
 
 	if ExistsEmail(datos.Email) {
 		log.Panic("There is already an account with that email")
@@ -55,7 +56,7 @@ func ExistsEmail(email string) bool {
 	return false
 }
 
-func ValidatheUser(users utils.LoginUsers) (bool, error) {
+func ValidatheUser(users models.LoginUsers) (bool, error) {
 	if ExistsEmail(users.Email) {
 		log.Println("email already exists")
 	}
@@ -81,4 +82,14 @@ func ValidatheUser(users utils.LoginUsers) (bool, error) {
 	}
 
 	return found, nil
+}
+
+func DeleteUser(token []string) {
+	decodetoken := ""
+	qdeleteuser := "DELETE FROM Users WHERE Email = ?"
+	_, err := db.Exec(qdeleteuser, decodetoken)
+	if err != nil {
+		log.Println("Error deleting")
+	}
+
 }

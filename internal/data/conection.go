@@ -1,7 +1,7 @@
-package models
+package data
 
 import (
-	"UserAPI/internal/models/data"
+	"UserAPI/internal/config"
 	"database/sql"
 	"log"
 
@@ -11,7 +11,7 @@ import (
 var db *sql.DB
 
 func Datasql() *sql.DB {
-	credential := data.NewDatabaseConfig()
+	credential := config.NewDatabaseConfig()
 	cfg := mysql.Config{
 		User:   credential.Database.User,
 		Passwd: credential.Database.Password,

@@ -1,13 +1,18 @@
 package handlers
 
 import (
+	"UserAPI/internal/api/auth"
 	"UserAPI/internal/api/pkg"
 	utils "UserAPI/internal/api/utils"
+	"UserAPI/internal/config"
+	"UserAPI/internal/models"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 )
+
+var activeTokens = make(map[string]bool)
 
 func decode(r *http.Request, v interface{}) {
 	data := r.Body
@@ -17,7 +22,7 @@ func decode(r *http.Request, v interface{}) {
 }
 
 func RegisterUserHandler(w http.ResponseWriter, r *http.Request) {
-	user := &utils.NewUser{}
+	user := &models.NewUser{}
 	decode(r, user)
 
 	w.Write([]byte(user.Email))
@@ -31,7 +36,7 @@ func RegisterUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func LoginUsersHandler(w http.ResponseWriter, r *http.Request) {
-	loginuser := &utils.LoginUsers{}
+	loginuser := &models.LoginUsers{}
 	decode(r, loginuser)
 
 	w.Write([]byte(loginuser.Email))
@@ -54,7 +59,9 @@ func LoginUsersHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	token, err := utils.Tokenauth(loginuser.Email)
+	activeTokens[token] = true
 
+	log.Println(activeTokens)
 	if err != nil {
 		log.Println("token is not valid", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -65,4 +72,38 @@ func LoginUsersHandler(w http.ResponseWriter, r *http.Request) {
 	// w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Login suseful"))
 	log.Println(token)
+}
+
+func LogoutUser(w http.ResponseWriter, r *http.Request) {
+
+	token := &models.Authlogin{}
+	decode(r, token)
+
+	env := config.NewDatabaseConfig()
+	key := []byte(env.SecreKey.Key)
+	_, err := auth.ValidateJWT(token.Token, string(key))
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Not Token"))
+	} else {
+		log.Println("Logout Suseful")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Logout Suseful"))
+	}
+
+}
+
+func DeleteAccouunt(w http.ResponseWriter, r *http.Request) {
+	tokenuser := &models.Authlogin{}
+
+	if tokenuser.Token != "" {
+
+		delete(activeTokens, tokenuser.Token)
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(""))
+	} else {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Not Token"))
+	}
 }
