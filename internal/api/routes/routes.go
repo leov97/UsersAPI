@@ -3,7 +3,11 @@ package routes
 import (
 	"UserAPI/internal/api/handlers"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
+
+var router = mux.NewRouter()
 
 func RegisterRoute() {
 	http.HandleFunc("/register", func(w http.ResponseWriter, r *http.Request) {
@@ -37,6 +41,7 @@ func LogoutRoute() {
 }
 
 func DeleteRoute() {
+
 	http.HandleFunc("/delete", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "DELETE" {
 			handlers.DeleteAccouunt(w, r)

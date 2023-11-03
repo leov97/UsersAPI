@@ -12,7 +12,9 @@ import (
 	"net/http"
 )
 
-var activeTokens = make(map[string]bool)
+// var activeTokens = make(map[string]bool)
+var env = config.NewDatabaseConfig()
+var key = []byte(env.SecreKey.Key)
 
 func decode(r *http.Request, v interface{}) {
 	data := r.Body
@@ -37,6 +39,11 @@ func RegisterUserHandler(w http.ResponseWriter, r *http.Request) {
 
 func LoginUsersHandler(w http.ResponseWriter, r *http.Request) {
 	loginuser := &models.LoginUsers{}
+	ActiveUsers := &models.ActiveUsers{
+
+		Users: make(map[string]string),
+	}
+	tokenuseractive := &models.Authlogin{}
 	decode(r, loginuser)
 
 	w.Write([]byte(loginuser.Email))
@@ -45,7 +52,7 @@ func LoginUsersHandler(w http.ResponseWriter, r *http.Request) {
 	// loginuser.Password = hash
 	fmt.Println(loginuser.Email)
 
-	userValid, err := pkg.ValidatheUser(*loginuser)
+	userID, userValid, err := pkg.ValidatheUser(*loginuser)
 	log.Println(userValid)
 	if err != nil {
 		log.Println("Error:", err)
@@ -58,10 +65,17 @@ func LoginUsersHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := utils.Tokenauth(loginuser.Email)
-	activeTokens[token] = true
+	token, err := utils.Tokenauth(userID, loginuser.Email)
+	tokenuseractive.Token = token
+	if err != nil {
+		log.Println("Error al verificar el usuario:", err)
+		return
+	}
 
-	log.Println(activeTokens)
+	id, user, err := pkg.CheckLogin(token, string(key))
+
+	pkg.PostUserActives(id, user)
+
 	if err != nil {
 		log.Println("token is not valid", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -72,21 +86,32 @@ func LoginUsersHandler(w http.ResponseWriter, r *http.Request) {
 	// w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Login suseful"))
 	log.Println(token)
+	log.Println(ActiveUsers.Users)
 }
 
+// this function logout the user from the session
 func LogoutUser(w http.ResponseWriter, r *http.Request) {
 
-	token := &models.Authlogin{}
-	decode(r, token)
-
+	tokenuser := &models.Authlogin{}
+	decode(r, tokenuser)
 	env := config.NewDatabaseConfig()
 	key := []byte(env.SecreKey.Key)
-	_, err := auth.ValidateJWT(token.Token, string(key))
+
+	_, err := auth.ValidateJWT(tokenuser.Token, string(key))
+	if err != nil {
+		log.Println(err)
+	}
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Not Token"))
 	} else {
+		_, email, err := pkg.CheckLogin(tokenuser.Token, string(key))
+		if err != nil {
+			log.Println(err)
+		}
+
+		pkg.DeleteUserActive(email)
 		log.Println("Logout Suseful")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("Logout Suseful"))
@@ -95,15 +120,40 @@ func LogoutUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteAccouunt(w http.ResponseWriter, r *http.Request) {
-	tokenuser := &models.Authlogin{}
+	deleteUser := &models.Authlogin{}
+	decode(r, deleteUser)
+	env := config.NewDatabaseConfig()
+	key := []byte(env.SecreKey.Key)
 
-	if tokenuser.Token != "" {
-
-		delete(activeTokens, tokenuser.Token)
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(""))
-	} else {
+	_, err := auth.ValidateJWT(deleteUser.Token, string(key))
+	if err != nil {
+		log.Println(err)
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Not Token"))
+		w.Write([]byte("Invalid Token"))
+		return
 	}
+	_, email, err := pkg.CheckLogin(deleteUser.Token, string(key))
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Error getting user email"))
+		return
+	}
+
+	IdActive, err := pkg.UserEnabled(email)
+
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Could not find active user"))
+		return
+	}
+
+	pkg.DeleteUser(IdActive)
+
+	pkg.DeleteUserActive(email)
+
+	log.Println("Successfully deleted user")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Successfully deleted user"))
 }

@@ -1,5 +1,11 @@
 package models
 
+import (
+	"sync"
+
+	"github.com/dgrijalva/jwt-go"
+)
+
 type NewUser struct {
 	Name     string `json:"name" validate:"required"`
 	Email    string `json:"email" validate:"required, email"`
@@ -26,5 +32,13 @@ type DatabaseConfig struct {
 }
 
 type Authlogin struct {
+	jwt.StandardClaims
 	Token string `json:"token" validate:"required"`
+	ID    string `json:"id"`
+	User  string `json:"email"`
+}
+
+type ActiveUsers struct {
+	Users map[string]string
+	Mu    sync.Mutex
 }

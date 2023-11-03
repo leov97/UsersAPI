@@ -1,11 +1,15 @@
 package pkg
 
 import (
+	"UserAPI/internal/api/auth"
 	"UserAPI/internal/api/utils"
 	"UserAPI/internal/data"
 	"UserAPI/internal/models"
+	"strconv"
 
 	"log"
+
+	"github.com/dgrijalva/jwt-go"
 )
 
 var db = data.Datasql()
@@ -56,40 +60,97 @@ func ExistsEmail(email string) bool {
 	return false
 }
 
-func ValidatheUser(users models.LoginUsers) (bool, error) {
+func ValidatheUser(users models.LoginUsers) (string, bool, error) {
 	if ExistsEmail(users.Email) {
 		log.Println("email already exists")
 	}
 
-	validacredential, err := db.Query("SELECT Password FROM Users WHERE Email = ?", users.Email)
+	validacredential, err := db.Query("SELECT UserID, Password FROM Users WHERE Email = ?", users.Email)
 	if err != nil {
-		return false, err
+		return "", false, err
 	}
 	defer validacredential.Close()
 	var storePassword string
 	found := false
+	var userID = models.Authlogin{}
 
 	for validacredential.Next() {
-		if err := validacredential.Scan(&storePassword); err != nil {
-			return false, err
+		if err := validacredential.Scan(&userID.ID, &storePassword); err != nil {
+			return "", false, err
 		}
 
 		if utils.CheckP(users.Password, storePassword) {
 			found = true
 			break
 		}
-
 	}
 
-	return found, nil
+	return userID.ID, found, nil
 }
 
-func DeleteUser(token []string) {
-	decodetoken := ""
-	qdeleteuser := "DELETE FROM Users WHERE Email = ?"
-	_, err := db.Exec(qdeleteuser, decodetoken)
+func CheckLogin(tokenStr string, secretkey string) (int, string, error) {
+	claims := &models.Authlogin{}
+
+	_, err := auth.ValidateJWT(tokenStr, secretkey)
 	if err != nil {
-		log.Println("Error deleting")
+		log.Println("Error validating", err)
+		return 0, "", err
 	}
 
+	jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (interface{}, error) {
+		return []byte(secretkey), nil
+	})
+
+	id, err := strconv.Atoi(claims.ID)
+	if err != nil {
+		log.Println("Error al convertir el string a int:", err)
+
+	}
+
+	return id, claims.User, nil
+}
+
+func PostUserActives(id int, email string) {
+
+	queryregister := "INSERT INTO UsersActive (Id, Email) VALUES (?, ?)"
+	_, err := db.Exec(queryregister, id, email)
+	if err != nil {
+		log.Println(err)
+	}
+
+}
+
+func DeleteUserActive(email string) {
+	queryDelete := "DELETE FROM UsersActive WHERE Email = ?"
+	_, err := db.Exec(queryDelete, email)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+func UserEnabled(email string) (int, error) {
+
+	validacredential, err := db.Query("SELECT Id FROM UsersActive WHERE Email = ?", email)
+	if err != nil {
+		return 0, err
+	}
+	defer validacredential.Close()
+
+	var id int
+
+	for validacredential.Next() {
+		if err := validacredential.Scan(&id); err != nil {
+			return 0, err
+		}
+	}
+
+	return id, nil
+}
+
+func DeleteUser(id int) {
+	queryDelete := "DELETE FROM Users WHERE UserID = ?"
+	_, err := db.Exec(queryDelete, id)
+	if err != nil {
+		log.Println(err)
+	}
 }
