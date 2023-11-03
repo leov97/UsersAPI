@@ -1,7 +1,7 @@
-package data
+package config
 
 import (
-	"UserAPI/internal/api/utils"
+	"UserAPI/internal/models"
 	"io/ioutil"
 	"log"
 	"os"
@@ -9,10 +9,10 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func NewDatabaseConfig() utils.DatabaseConfig {
-	var config utils.DatabaseConfig
+func NewDatabaseConfig() models.DatabaseConfig {
+	var config models.DatabaseConfig
 
-	dataconfig, err := os.Open("cred.yaml")
+	dataconfig, err := os.Open("config.yaml")
 	if err != nil {
 		log.Fatal(err)
 	}

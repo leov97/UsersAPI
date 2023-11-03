@@ -1,15 +1,20 @@
 package main
 
 import (
-	"UserAPI/internal/api/handlers/routes"
+	"UserAPI/internal/api/routes"
 	"log"
 	"net/http"
 )
 
 func main() {
-	//db := connection.Datasql()
+
+	//db  connection.Datasql()
 	routes.RegisterRoute()
+	routes.LoginRoute()
+	routes.LogoutRoute()
+	routes.DeleteRoute()
 	starlistener()
+
 }
 
 func starlistener() {
